@@ -1,11 +1,13 @@
 package com.example.konrad.quiz;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v4.content.SharedPreferencesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -16,7 +18,7 @@ public class StartActivity extends AppCompatActivity {
     protected EditText mName;
     @BindView(R.id.difficulty)
     protected Spinner mDifficulty;
-    private SharedPreferences mPrefs;
+    private UserPreferences mPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,10 +26,9 @@ public class StartActivity extends AppCompatActivity {
         setContentView(R.layout.activity_start);
         ButterKnife.bind(this);
 
-        mPrefs = getSharedPreferences("user", MODE_PRIVATE);       // ctrl alt f i tworzy private
-        mName.setText(mPrefs.getString("username", ""));
-
-
+        mPrefs = new UserPreferences(this);       // ctrl alt f i tworzy private
+        mName.setText(mPrefs.getUsername());      //zmienilismy to ctrl+alt+c i replace zaznaczamy
+        mDifficulty.setSelection(mPrefs.getLevel());
     }
 
     @OnClick(R.id.next)
@@ -38,12 +39,22 @@ public class StartActivity extends AppCompatActivity {
             mName.setError("Brak nazwy gracza !");
             return;
         }
+
+        int selectedLevel = mDifficulty.getSelectedItemPosition();
+        if (selectedLevel == 0) {
+            Toast.makeText(this, "Wybierz poziom trudności !", Toast.LENGTH_LONG).show();
+            return;
+        }
         // TODO Zapamietanie nazwy gracza i poziomu trudnosci
-        mPrefs.edit().putString("username", name).apply();
+        mPrefs.setUsername(name);
+        mPrefs.setLevel(selectedLevel);
 
 
+        // TODO Losowanie puli pytan
         // TODO Otwarcie nowego ekranu
-        // TODO Otwarcie nowego ekranu
+        Intent questionIntent = new Intent(this, QuestionActivity.class );
+        startActivity(questionIntent);
+
     }
 }
 
