@@ -9,6 +9,10 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -51,7 +55,20 @@ public class StartActivity extends AppCompatActivity {
 
 
         // TODO Losowanie puli pytan
-        // TODO Otwarcie nowego ekranu
+
+        QuestionDatabase db = null;
+        List<Question> questions = db.getQuestions(selectedLevel);
+        Random random = new Random();
+        while(questions.size() > 5){
+            // Usuwamy losowe pytania az zostanie nam ich tylko 5
+            questions.remove(random.nextInt(questions.size()));
+        }
+        // Przetasowujemy kolekcje pozostalych pytan aby kolejnosc rowniez  byla losowa
+        Collections.shuffle(questions);
+
+        // TODO : Przekazanie lub zapisanie wylosowanych pytan na potrzeby nastepnego ekranu
+
+        // Otwarcie nowego ekranu
         Intent questionIntent = new Intent(this, QuestionActivity.class );
         startActivity(questionIntent);
 
