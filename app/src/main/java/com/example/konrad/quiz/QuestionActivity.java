@@ -2,10 +2,12 @@ package com.example.konrad.quiz;
 
 import android.content.DialogInterface;
 import android.os.Handler;
+import android.os.PersistableBundle;
 import android.preference.DialogPreference;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -26,12 +28,15 @@ public class QuestionActivity extends AppCompatActivity {
     protected RadioGroup mAnswers;
     @BindViews({R.id.answer_a, R.id.answer_b, R.id.answer_c})
     protected List<RadioButton> mAnswersButtons;
+    @BindView(R.id.btn_next)
+    protected Button mNextButton;
+
 
     private int mCurrentQuestion = 0;
     private List<Question> mQuestions;
     private int[] mAnswersArray;
 
-    private boolean mFirstBackClicked = false;
+    private boolean mFirstBackClicked;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +48,19 @@ public class QuestionActivity extends AppCompatActivity {
         mAnswersArray = new int[mQuestions.size()];
         refreshQuestionView();
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+
+        mAnswersArray[mCurrentQuestion] = mAnswers.getCheckedRadioButtonId();
+
+        // zapisanie biezacej pozycji
+        outState.putInt("position", mCurrentQuestion);
+        //Zapisanie tablicy z udzielonymi odpowiedziami przez uzytkownika
+        outState.putIntArray("answers", mAnswersArray);
+    }
+
 
     @Override
     public void onBackPressed() {
@@ -80,6 +98,7 @@ public class QuestionActivity extends AppCompatActivity {
         if (mAnswersArray[mCurrentQuestion] > 0) {
             mAnswers.check(mAnswersArray[mCurrentQuestion]);
         }
+        mNextButton.setText(mCurrentQuestion < mQuestions.size() - 1 ? "Dalej" : "Zakoncz");
     }
 
     @OnClick(R.id.btn_back)
@@ -89,6 +108,7 @@ public class QuestionActivity extends AppCompatActivity {
             return;
 
         }
+        mAnswersArray[mCurrentQuestion] = mAnswers.getCheckedRadioButtonId();
         mCurrentQuestion--;
         refreshQuestionView();
 
@@ -99,13 +119,6 @@ public class QuestionActivity extends AppCompatActivity {
     protected void onNextClick() {
         // Zapisanie udzielonej odpowiedzi na aktualne pytanie
         mAnswersArray[mCurrentQuestion] = mAnswers.getCheckedRadioButtonId();
-        if (mCurrentQuestion == mQuestions.size() - 1) {
-            int correctAnswers = countCorrectAnswers();
-            int TotalAnswers = mAnswersArray.length;
-            displayResults(correctAnswers, TotalAnswers);
-            return;
-
-        }
 
         // Zapisanie udzielonej odpowiedzi na aktualne pytanie
         mAnswersArray[mCurrentQuestion] = mAnswers.getCheckedRadioButtonId();
@@ -116,24 +129,21 @@ public class QuestionActivity extends AppCompatActivity {
 
             return;
         }
+        if (mCurrentQuestion == mQuestions.size() - 1) {
+            int correctAnswers = countCorrectAnswers();
+            int TotalAnswers = mAnswersArray.length;
+            displayResults(correctAnswers, TotalAnswers);
+            return;
+
+        }
         mCurrentQuestion++;
         refreshQuestionView();
     }
 
     private void displayResults(int correctAnswers, int totalAnswers) {
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Wynik quizu")
-                .setCancelable(false)
-                .setMessage("Odpowiedziałeś poprawnie na " + correctAnswers + " pytań z " + totalAnswers)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-        })
-        .create();
-        dialog.show();
+        QuizResultsDialog.newInstance(correctAnswers, totalAnswers).show(getSupportFragmentManager(), null);
     }
+
     private int countCorrectAnswers() {
         int sum = 0;
 
