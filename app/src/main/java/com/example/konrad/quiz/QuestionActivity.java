@@ -1,5 +1,9 @@
 package com.example.konrad.quiz;
 
+import android.content.DialogInterface;
+import android.os.Handler;
+import android.preference.DialogPreference;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.RadioButton;
@@ -8,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
+
 
 import butterknife.BindView;
 import butterknife.BindViews;
@@ -26,6 +31,8 @@ public class QuestionActivity extends AppCompatActivity {
     private List<Question> mQuestions;
     private int[] mAnswersArray;
 
+    private boolean mFirstBackClicked = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +42,30 @@ public class QuestionActivity extends AppCompatActivity {
         mQuestions = (List<Question>) getIntent().getSerializableExtra("questions");
         mAnswersArray = new int[mQuestions.size()];
         refreshQuestionView();
+    }
+
+    @Override
+    public void onBackPressed() {
+        onBackPressed();
+    }
+
+    private void onBackTapped() {
+        if (!mFirstBackClicked) {
+            // Ustawic flage na true
+            mFirstBackClicked = true;
+            // pokazac Toast
+            Toast.makeText(this, "Kliknij ponownie aby wyjść", Toast.LENGTH_LONG).show();
+            // Uruchomic odliczanie (1-2sek) i po tym czasie ustawic flage ponownie na false
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mFirstBackClicked = false;
+                }
+            }, 1000);
+        } else {  // drugie klikniecie
+            // zamknac okno Activity
+            finish();
+        }
     }
 
     private void refreshQuestionView() {
@@ -54,6 +85,7 @@ public class QuestionActivity extends AppCompatActivity {
     @OnClick(R.id.btn_back)
     protected void onBackClick() {
         if (mCurrentQuestion == 0) {
+            onBackTapped();
             return;
 
         }
@@ -65,7 +97,12 @@ public class QuestionActivity extends AppCompatActivity {
 
     @OnClick(R.id.btn_next)
     protected void onNextClick() {
+        // Zapisanie udzielonej odpowiedzi na aktualne pytanie
+        mAnswersArray[mCurrentQuestion] = mAnswers.getCheckedRadioButtonId();
         if (mCurrentQuestion == mQuestions.size() - 1) {
+            int correctAnswers = countCorrectAnswers();
+            int TotalAnswers = mAnswersArray.length;
+            displayResults(correctAnswers, TotalAnswers);
             return;
 
         }
@@ -76,9 +113,39 @@ public class QuestionActivity extends AppCompatActivity {
         if (mAnswersArray[mCurrentQuestion] == -1) {
             //Jezeli nie to wyswietlamy komunikat i zatrzymjemy przejscie dalej (return)
             Toast.makeText(this, "Wybierz odpowiedz", Toast.LENGTH_SHORT).show();
+
             return;
         }
         mCurrentQuestion++;
         refreshQuestionView();
+    }
+
+    private void displayResults(int correctAnswers, int totalAnswers) {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Wynik quizu")
+                .setCancelable(false)
+                .setMessage("Odpowiedziałeś poprawnie na " + correctAnswers + " pytań z " + totalAnswers)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+        })
+        .create();
+        dialog.show();
+    }
+    private int countCorrectAnswers() {
+        int sum = 0;
+
+        for (int i = 0; i < mQuestions.size(); i++) {
+            Question question = mQuestions.get(i);
+            int userAnswerId = mAnswersArray[i];
+            int correctAnswerId = mAnswersButtons.get(question.getCorrectAnswer()).getId();
+            if (userAnswerId == correctAnswerId) {
+                sum++;
+            }
+        }
+        return sum;
+
     }
 }
