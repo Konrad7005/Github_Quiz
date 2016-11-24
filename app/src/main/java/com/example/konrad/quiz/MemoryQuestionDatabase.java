@@ -29,22 +29,18 @@ public class MemoryQuestionDatabase implements QuestionDatabase {
                     answers.add(a + b + "");
                     continue;
                 }
+                int badA = -1;
+                while (badA < 0 || badA == a + b) {
+                    badA = (a + b) - random.nextInt(a + b);
+                }
+                answers.add(badA + "");
             }
-            int badA = -1;
-            while (badA < 0 || badA == a + b) {
-                badA = (a + b) - random.nextInt(a + b);
-            }
-            answers.add(badA + "");
 
-        questions.add(new Question(question, randomDifficulty, answers, correctAnswerPosition));
 
+            questions.add(new Question(question, randomDifficulty, answers, correctAnswerPosition));
         }
 
         return questions;
-
-
-
-
 
 
     }

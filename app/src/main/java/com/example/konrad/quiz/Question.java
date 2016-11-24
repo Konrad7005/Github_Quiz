@@ -1,12 +1,13 @@
 package com.example.konrad.quiz;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by Konrad on 2016-11-23.
  */
 
-public class Question {
+public class Question implements Serializable {
 
     private String content;
     private int difficulty;
